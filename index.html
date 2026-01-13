@@ -15,7 +15,7 @@
             overscroll-behavior: none;
         }
         
-        /* 主容器 (閱讀區) */
+        /* 主容器 (閱讀與填寫區) */
         .main-container { 
             max-width: 800px; margin: 20px auto; background: white; 
             padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
@@ -43,7 +43,7 @@
         label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 16px; }
         input[type="text"], input[type="number"] { 
             width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; 
-            font-size: 16px; /* 防止 iOS 縮放 */
+            font-size: 16px; 
         }
         .bank-group { display: flex; gap: 10px; flex-direction: column; }
         @media (min-width: 600px) { .bank-group { flex-direction: row; } }
@@ -70,7 +70,6 @@
             width: 100%; max-width: 820px; margin: 0 auto;
             display: flex; flex-direction: column; gap: 20px; align-items: center;
         }
-        /* 手機橫向捲動支援 */
         @media (max-width: 800px) {
             #preview-content { align-items: flex-start; padding: 0 10px; overflow-x: auto; }
         }
@@ -84,7 +83,7 @@
         /* PDF 模板隱藏區 */
         #template-source { display: none; }
         
-        /* PDF 實體頁面樣式 (模擬 A4) */
+        /* PDF 實體頁面樣式 */
         .pdf-page-render {
             width: 750px; /* 固定寬度 */
             min-height: 1060px; /* A4 高度 */
@@ -229,7 +228,9 @@
             <li>乙方承諾全程採純徒手按摩，嚴禁使用筋膜刀、治療儀器、拔罐及刮痧等非徒手工具。</li>
             <li>耗材與設備：相關消耗性材料（如精油、乳液）由甲方統一提供，乙方不得私自使用未經甲方核可之產品，以確保服務品質與選手皮膚安全。</li>
         </ul>
+    </div>
 
+    <div id="tpl-page2">
         <div class="pdf-section-title">二、 工作時間與排班</div>
         <div class="pdf-item"><strong>服務時段：</strong>原則為週一至週五 17:50 至 20:50。時段多寡將視中心需求（如總集訓、亞運期間）進行調整。</div>
         <div class="pdf-item"><strong>排班機制：</strong>採全預約制。甲方將於每月 15 日前排定次月名單。</div>
@@ -237,14 +238,14 @@
         <div class="pdf-item"><strong>代班責任歸屬：</strong>針對乙方提出之換班請求，甲方得協助於專案人才庫中諮詢其他老師之代班意願，惟甲方不負保證尋得替補人員之義務。</div>
         <div class="pdf-item"><strong>違約認定：</strong>若經甲方協助諮詢後仍未能尋得代班人，乙方仍應依原排定班表出勤。若乙方最終未能出勤，視同乙方違約，甲方得依本契約第四條之規範扣除違約金或終止契約。</div>
         <div class="pdf-item"><strong>緊急事故：</strong>僅限突發傷病或一親等內重大變故（需提供診斷證明或相關佐證），則不在此限。</div>
-    </div>
 
-    <div id="tpl-page2">
         <div class="pdf-section-title">三、 薪資給付與授權條款</div>
         <div class="pdf-item"><strong>薪資標準：</strong>乙方薪資以實際服務小時計算，時薪以雙方電話議定後於下方「約定服務時薪」欄位填寫之金額為準。</div>
         <div class="pdf-item"><strong>給付日期：</strong>甲方應於每月底提送發票，俟中心撥付價金後（預計每月初），於 5 個工作日內匯入乙方指定帳戶。</div>
         <div class="pdf-item"><strong>中心代付授權：</strong>乙方同意，若甲方未依限給付薪資且經中心催告仍未改正者，甲方同意由中心將應給付甲方之價金直接撥付予乙方。</div>
+    </div>
 
+    <div id="tpl-page3">
         <div class="pdf-section-title">四、 服務品質與行政配合</div>
         <div class="pdf-item"><strong>個資與報備授權：</strong>乙方同意將身分證影本、證照影本、性平受訓證明及相關個資提供予甲方，並授權甲方提交予國家運動訓練中心辦理入內報備、資格審查及保密切結。</div>
         <div class="pdf-item"><strong>教育訓練：</strong>乙方應於到職前完成 2 小時性別平等教育訓練，並提交證明文件。</div>
@@ -254,27 +255,27 @@
             <li>若選手滿意度評分低於 4 分，乙方應配合提交檢討報告；若低於 3 分，甲方得立即停止排班並終止契約。</li>
             <li>乙方若遲到（每 10 分鐘計罰 300 元）或違反規範導致中心對甲方計罰，該罰款由乙方薪資中扣除。</li>
         </ul>
-    </div>
 
-    <div id="tpl-page3">
         <div class="pdf-section-title">五、 勞工權益與保險配套</div>
         <div class="pdf-item"><strong>性平保障：</strong>甲方落實《性別平等工作法》相關措施，保障乙方申訴權利。</div>
         <div class="pdf-item"><strong>勞職保投保配套：</strong>甲方依規為乙方投保勞保、職保及健保。乙方應於簽約時提供正確之投保與薪資匯款資料，若因資料提供延遲或錯誤導致投保、撥薪作業延誤，責任由乙方自負。</div>
+    </div>
 
+    <div id="tpl-page4">
         <div class="pdf-section-title">六、 保密義務</div>
         <div class="pdf-item">乙方對於因執行職務所知悉之中心公務秘密、選手個人資料及隱私，負有絕對保密之義務，不因契約終止而解除。</div>
 
         <div class="pdf-section-title">七、 法律管轄</div>
         <div class="pdf-item">本契約如有爭議，雙方同意以臺灣高雄地方法院為第一審管轄法院。</div>
-    </div>
 
-    <div id="tpl-page4">
         <div style="margin-top: 50px; border: 2px solid #333; padding: 20px;">
             <strong>甲方：</strong> 睿思有限公司 <br>
             <strong>代表人：</strong> 蔡惠婷 <br>
             <strong>統一編號：</strong> 90048526 
         </div>
+    </div>
 
+    <div id="tpl-page5">
         <div style="margin-top: 40px; font-size: 18px; font-weight: bold;">乙方（勞工）：</div>
         <div class="info-table">
             <div class="info-row"><div class="info-label">姓名：</div><div class="info-value fill-name"></div></div>
@@ -327,7 +328,7 @@
         ctx.beginPath();
     }
 
-    // --- 預覽流程 (4頁) ---
+    // --- 預覽流程 ---
     function goToPreview() {
         if(!document.getElementById('signerName').value) { alert("請填寫姓名"); return; }
         
@@ -339,11 +340,11 @@
         const bank = (document.getElementById('bankName').value || "") + " " + (document.getElementById('bankBranch').value || "") + " " + (document.getElementById('bankAccount').value || "");
         const sigData = canvas.toDataURL('image/png');
 
-        // 渲染 4 頁 PDF
+        // 渲染 5 頁 PDF
         const previewContent = document.getElementById('preview-content');
         previewContent.innerHTML = '';
         
-        const pages = ['tpl-page1', 'tpl-page2', 'tpl-page3', 'tpl-page4'];
+        const pages = ['tpl-page1', 'tpl-page2', 'tpl-page3', 'tpl-page4', 'tpl-page5'];
         pages.forEach(tplId => {
             const pageDiv = document.createElement('div');
             pageDiv.className = 'pdf-page-render';
@@ -391,7 +392,6 @@
 
             const pdfBase64 = pdf.output('datauristring');
             const name = document.getElementById('signerName').value;
-            // 您的 GAS URL
             const scriptURL = "https://script.google.com/macros/s/AKfycbzHaJLHFBdvM3NPYqP4yrJPx84wX6tPK54JNtUIqaJ6GDH7G4X5ZknwmVvrDgU49-DH/exec"; 
 
             await fetch(scriptURL, {
