@@ -15,13 +15,13 @@
             overscroll-behavior: none;
         }
         
-        /* 主容器 (閱讀與填寫區) */
+        /* 主容器 (閱讀區) */
         .main-container { 
             max-width: 800px; margin: 20px auto; background: white; 
             padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
         }
 
-        /* 合約閱讀文字樣式 */
+        /* 標題與內文樣式 */
         h1 { text-align: center; font-size: 22px; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 15px; line-height: 1.5; }
         h2 { font-size: 18px; background-color: #eee; padding: 10px; margin-top: 30px; border-left: 5px solid #2c3e50; font-weight: bold; }
         p, li { line-height: 1.8; font-size: 15px; margin-bottom: 10px; text-align: justify; }
@@ -29,15 +29,18 @@
         
         .contract-section { margin-bottom: 20px; }
 
-        /* 輸入區塊樣式 (放在底部) */
+        /* 填寫區塊 (位於底部) */
         .input-area {
-            background: #f8f9fa; padding: 25px; border-radius: 8px; border: 2px solid #007bff; 
-            margin-top: 40px;
+            background: #eef2f7; padding: 30px; border-radius: 8px; border: 2px solid #2c3e50; 
+            margin-top: 50px; /* 與上方合約拉開距離 */
         }
-        .form-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #007bff; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
+        .form-title { 
+            font-size: 20px; font-weight: bold; margin-bottom: 25px; 
+            color: #2c3e50; text-align: center; border-bottom: 2px dashed #999; padding-bottom: 15px; 
+        }
         
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 16px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 16px; }
         input[type="text"], input[type="number"] { 
             width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; 
             font-size: 16px; /* 防止 iOS 縮放 */
@@ -50,7 +53,7 @@
             border: 2px dashed #6c757d; background: #fff; cursor: crosshair; 
             display: block; width: 100%; touch-action: none; border-radius: 4px; 
         }
-        .sig-buttons { margin-top: 5px; text-align: right; }
+        .sig-buttons { margin-top: 8px; text-align: right; }
         .clear-btn { background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
 
         /* 按鈕 */
@@ -58,9 +61,7 @@
         .btn-submit { background: #28a745; color: white; }
         .btn-edit { background: #6c757d; color: white; }
 
-        /* =========================================
-           預覽視窗 (Modal)
-           ========================================= */
+        /* 預覽視窗 (Modal) */
         #preview-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 9999; overflow-y: auto; padding: 20px 0;
@@ -80,12 +81,10 @@
         }
         .modal-footer button { width: auto; min-width: 120px; margin: 0; }
 
-        /* =========================================
-           PDF 模板樣式 (Hidden Template)
-           ========================================= */
+        /* PDF 模板隱藏區 */
         #template-source { display: none; }
         
-        /* 這是 PDF 生成時的樣式，模擬 A4 */
+        /* PDF 實體頁面樣式 (模擬 A4) */
         .pdf-page-render {
             width: 750px; /* 固定寬度 */
             min-height: 1060px; /* A4 高度 */
@@ -98,7 +97,6 @@
         .pdf-section-title { font-size: 16px; font-weight: bold; background: #eee; padding: 5px; margin-top: 15px; margin-bottom: 8px; border-left: 4px solid #333; }
         .pdf-item { margin-bottom: 8px; }
         
-        /* 乙方填寫資料表格化 */
         .info-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
         .info-row { border-bottom: 1px solid #ccc; display: flex; padding: 10px 0; align-items: flex-end; }
         .info-label { width: 130px; font-weight: bold; text-align: right; padding-right: 15px; flex-shrink: 0; }
@@ -115,7 +113,7 @@
         
         <p>
             <strong>甲方（雇主）：</strong> 睿思有限公司<br>
-            <strong>乙方（勞工）：</strong> <span id="display-name-placeholder" style="color:#007bff; font-weight:bold;">(請於下方填寫)</span>
+            <strong>乙方（勞工）：</strong> <span id="display-name-placeholder" style="color:#007bff; font-weight:bold;">(請滑動至底部填寫)</span>
         </p>
 
         <p>本契約因執行國家運動訓練中心「115 年度培訓隊選手及教練按摩服務（開口契約）案」（以下簡稱本專案）而成立，雙方同意條款如下：</p>
@@ -179,7 +177,7 @@
     </div>
 
     <div class="input-area">
-        <div class="form-title">📝 閱讀完畢，請填寫下方資料</div>
+        <div class="form-title">📝 我已閱讀完畢，開始填寫</div>
         
         <div class="input-group"><label>1. 雙方議定時薪 (新臺幣/小時)：</label><input type="number" id="hourlyRate" placeholder="例如：500"></div>
         <div class="input-group"><label>2. 姓名：</label><input type="text" id="signerName" placeholder="請輸入真實姓名" oninput="document.getElementById('display-name-placeholder').innerText = this.value || '(請於下方填寫)'"></div>
@@ -215,6 +213,7 @@
 </div>
 
 <div id="template-source">
+    
     <div id="tpl-page1">
         <div class="pdf-title">睿思有限公司 115 年度定期勞動契約書 (按摩師)</div>
         <div class="pdf-item"><strong>甲方（雇主）：</strong> 睿思有限公司</div>
