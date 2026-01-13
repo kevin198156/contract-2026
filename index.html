@@ -44,7 +44,7 @@
         .sig-buttons { margin-top: 8px; text-align: right; }
 
         /* =========================================
-           PDF 頁面結構樣式 (關鍵：定義三頁內容)
+           PDF 頁面結構樣式 (定義三頁內容)
            ========================================= */
         
         /* 隱藏來源 DOM */
@@ -60,7 +60,6 @@
             box-sizing: border-box;
             border: 1px solid #ccc;
             position: relative;
-            /* 讓文字大一點，避免壓縮 */
             font-size: 16px; 
         }
 
@@ -332,20 +331,21 @@
 
         // 絕對硬式分頁：Page 1
         const canvas1 = await html2canvas(document.getElementById('pdf-page-1'), opts);
+        // 使用 0.6 的品質壓縮 (解決手機上傳失敗關鍵)
         const imgHeight1 = (canvas1.height * pdfWidth) / canvas1.width;
-        pdf.addImage(canvas1.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pdfWidth, imgHeight1);
+        pdf.addImage(canvas1.toDataURL('image/jpeg', 0.6), 'JPEG', 0, 0, pdfWidth, imgHeight1);
 
         // Page 2
         pdf.addPage();
         const canvas2 = await html2canvas(document.getElementById('pdf-page-2'), opts);
         const imgHeight2 = (canvas2.height * pdfWidth) / canvas2.width;
-        pdf.addImage(canvas2.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pdfWidth, imgHeight2);
+        pdf.addImage(canvas2.toDataURL('image/jpeg', 0.6), 'JPEG', 0, 0, pdfWidth, imgHeight2);
 
         // Page 3
         pdf.addPage();
         const canvas3 = await html2canvas(document.getElementById('pdf-page-3'), opts);
         const imgHeight3 = (canvas3.height * pdfWidth) / canvas3.width;
-        pdf.addImage(canvas3.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pdfWidth, imgHeight3);
+        pdf.addImage(canvas3.toDataURL('image/jpeg', 0.6), 'JPEG', 0, 0, pdfWidth, imgHeight3);
 
         return pdf;
     }
@@ -359,6 +359,7 @@
             const pdf = await createPDFBlob();
             const pdfBase64 = pdf.output('datauristring');
             const name = document.getElementById('signerName').value;
+            // 使用您之前提供的 GAS 網址
             const scriptURL = "https://script.google.com/macros/s/AKfycbzHaJLHFBdvM3NPYqP4yrJPx84wX6tPK54JNtUIqaJ6GDH7G4X5ZknwmVvrDgU49-DH/exec"; 
 
             await fetch(scriptURL, {
