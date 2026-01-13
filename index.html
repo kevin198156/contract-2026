@@ -21,7 +21,7 @@
             padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
         }
 
-        /* 標題與內文樣式 */
+        /* 合約閱讀文字樣式 */
         h1 { text-align: center; font-size: 22px; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 15px; line-height: 1.5; }
         h2 { font-size: 18px; background-color: #eee; padding: 10px; margin-top: 30px; border-left: 5px solid #2c3e50; font-weight: bold; }
         p, li { line-height: 1.8; font-size: 15px; margin-bottom: 10px; text-align: justify; }
@@ -29,10 +29,10 @@
         
         .contract-section { margin-bottom: 20px; }
 
-        /* 填寫區塊 (位於底部) */
+        /* 輸入區塊樣式 (放在底部) */
         .input-area {
             background: #eef2f7; padding: 30px; border-radius: 8px; border: 2px solid #2c3e50; 
-            margin-top: 50px; /* 與上方合約拉開距離 */
+            margin-top: 50px; 
         }
         .form-title { 
             font-size: 20px; font-weight: bold; margin-bottom: 25px; 
@@ -113,7 +113,7 @@
         
         <p>
             <strong>甲方（雇主）：</strong> 睿思有限公司<br>
-            <strong>乙方（勞工）：</strong> <span id="display-name-placeholder" style="color:#007bff; font-weight:bold;">(請滑動至底部填寫)</span>
+            <strong>乙方（勞工）：</strong> <span id="display-name-placeholder" style="color:#007bff; font-weight:bold;">(請於下方填寫)</span>
         </p>
 
         <p>本契約因執行國家運動訓練中心「115 年度培訓隊選手及教練按摩服務（開口契約）案」（以下簡稱本專案）而成立，雙方同意條款如下：</p>
@@ -177,7 +177,7 @@
     </div>
 
     <div class="input-area">
-        <div class="form-title">📝 我已閱讀完畢，開始填寫</div>
+        <div class="form-title">📝 閱讀完畢，請填寫下方資料</div>
         
         <div class="input-group"><label>1. 雙方議定時薪 (新臺幣/小時)：</label><input type="number" id="hourlyRate" placeholder="例如：500"></div>
         <div class="input-group"><label>2. 姓名：</label><input type="text" id="signerName" placeholder="請輸入真實姓名" oninput="document.getElementById('display-name-placeholder').innerText = this.value || '(請於下方填寫)'"></div>
@@ -266,14 +266,16 @@
 
         <div class="pdf-section-title">七、 法律管轄</div>
         <div class="pdf-item">本契約如有爭議，雙方同意以臺灣高雄地方法院為第一審管轄法院。</div>
+    </div>
 
-        <div style="margin-top: 30px; border: 2px solid #333; padding: 15px;">
+    <div id="tpl-page4">
+        <div style="margin-top: 50px; border: 2px solid #333; padding: 20px;">
             <strong>甲方：</strong> 睿思有限公司 <br>
             <strong>代表人：</strong> 蔡惠婷 <br>
             <strong>統一編號：</strong> 90048526 
         </div>
 
-        <div style="margin-top: 30px;"><strong>乙方（勞工）：</strong></div>
+        <div style="margin-top: 40px; font-size: 18px; font-weight: bold;">乙方（勞工）：</div>
         <div class="info-table">
             <div class="info-row"><div class="info-label">姓名：</div><div class="info-value fill-name"></div></div>
             <div class="info-row"><div class="info-label">身分證字號：</div><div class="info-value fill-id"></div></div>
@@ -281,7 +283,7 @@
             <div class="info-row"><div class="info-label">約定時薪：</div><div class="info-value"><span class="fill-rate"></span> 元/小時</div></div>
             <div class="info-row"><div class="info-label">薪資帳戶：</div><div class="info-value fill-bank"></div></div>
             <div class="info-row"><div class="info-label">簽署日期：</div><div class="info-value">中華民國 115 年 1 月 13 日</div></div>
-            <div class="info-row" style="border:none; margin-top:10px;">
+            <div class="info-row" style="border:none; margin-top:20px;">
                 <div class="info-label">簽章：</div>
                 <div class="info-value"><img class="fill-sig signature-img" /></div>
             </div>
@@ -310,7 +312,6 @@
         return { x: clientX - rect.left, y: clientY - rect.top };
     }
 
-    // ★ 簽名板優化 (防止誤觸) ★
     canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); });
     canvas.addEventListener('touchstart', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); e.preventDefault(); }, {passive: false});
     
@@ -326,7 +327,7 @@
         ctx.beginPath();
     }
 
-    // --- 預覽流程 ---
+    // --- 預覽流程 (4頁) ---
     function goToPreview() {
         if(!document.getElementById('signerName').value) { alert("請填寫姓名"); return; }
         
@@ -338,11 +339,11 @@
         const bank = (document.getElementById('bankName').value || "") + " " + (document.getElementById('bankBranch').value || "") + " " + (document.getElementById('bankAccount').value || "");
         const sigData = canvas.toDataURL('image/png');
 
-        // 渲染 PDF 頁面到預覽區
+        // 渲染 4 頁 PDF
         const previewContent = document.getElementById('preview-content');
         previewContent.innerHTML = '';
         
-        const pages = ['tpl-page1', 'tpl-page2', 'tpl-page3'];
+        const pages = ['tpl-page1', 'tpl-page2', 'tpl-page3', 'tpl-page4'];
         pages.forEach(tplId => {
             const pageDiv = document.createElement('div');
             pageDiv.className = 'pdf-page-render';
@@ -390,6 +391,7 @@
 
             const pdfBase64 = pdf.output('datauristring');
             const name = document.getElementById('signerName').value;
+            // 您的 GAS URL
             const scriptURL = "https://script.google.com/macros/s/AKfycbzHaJLHFBdvM3NPYqP4yrJPx84wX6tPK54JNtUIqaJ6GDH7G4X5ZknwmVvrDgU49-DH/exec"; 
 
             await fetch(scriptURL, {
