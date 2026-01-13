@@ -14,14 +14,18 @@
             overscroll-behavior: none;
         }
         
+        /* 容器設定 */
         .container { 
             max-width: 800px; 
             margin: 0 auto; 
             background: white; 
-            padding: 40px; 
+            padding: 20px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
         }
-        
+        @media (min-width: 600px) {
+            .container { padding: 40px; }
+        }
+
         .page-content { background: white; margin-bottom: 20px; }
 
         /* --- 合約排版 --- */
@@ -32,7 +36,7 @@
         .contract-text { margin-bottom: 15px; line-height: 1.8; text-align: justify; font-size: 15px; }
         .contract-sub-title { font-weight: bold; margin-bottom: 5px; display: block; color: #000; }
         
-        /* 姓名同步區 */
+        /* 姓名同步區 (加大) */
         .sync-name { 
             border-bottom: 2px solid #000; 
             min-width: 150px; 
@@ -81,8 +85,11 @@
         }
         .sig-buttons { margin-top: 8px; text-align: right; }
 
-        /* --- 預覽區塊樣式 (手機防跑版核心) --- */
-        /* 外層容器：允許捲動 */
+        /* =========================================
+           預覽/PDF 模式 (Mobile Proof 核心修正)
+           ========================================= */
+        
+        /* 預覽容器：允許捲動，但內部寬度固定 */
         #preview-scroll-container {
             display: none;
             width: 100%;
@@ -94,13 +101,19 @@
             margin-top: 10px;
         }
 
-        /* 最終合約表格 - 內嵌於第二頁 */
+        /* ★關鍵修正★：強制固定寬度 800px，不使用 max-width */
+        /* 這樣 html2canvas 在手機上截圖時，就會認為這是一個寬螢幕，不會擠壓內容 */
         #final-contract-block { 
             display: none; 
+            width: 800px !important; /* 強制寬度 */
+            min-width: 800px !important;
+            margin: 0 auto;
             margin-top: 30px;
             border-top: 3px solid #333; 
-            padding-top: 20px;
+            padding: 30px; 
             color: #000;
+            background: white;
+            box-sizing: border-box;
         }
 
         .preview-row {
@@ -347,6 +360,13 @@
 
 </div>
 
+<div id="preview-scroll-container">
+    <div id="preview-clone-target"></div>
+</div>
+<div id="mobile-hint" style="display:none; text-align:center; color:#e74c3c; padding: 10px; font-weight:bold;">
+    💡 手機用戶請「左右滑動」表格以確認內容，並可「截圖」留存。
+</div>
+
 <div class="spacer"></div>
 
 <div class="action-bar" id="editBtns">
@@ -408,7 +428,10 @@
     // --- 預覽切換 ---
     function togglePreview(show) {
         const inputContainer = document.getElementById('input-form-container');
+        const scrollContainer = document.getElementById('preview-scroll-container');
         const finalBlock = document.getElementById('final-contract-block');
+        const mobileHint = document.getElementById('mobile-hint');
+        const cloneTarget = document.getElementById('preview-clone-target');
 
         if(show) {
             if(!document.getElementById('signerName').value) { alert("請至少填寫姓名"); return; }
@@ -427,9 +450,16 @@
             document.getElementById('pv_dateFull').innerText = document.getElementById('dateDisplayEdit').innerText.trim();
             document.getElementById('preview-sig-img').src = canvas.toDataURL('image/png');
 
-            // 顯示
+            // 顯示邏輯：將 finalBlock 顯示並複製一份到 scrollContainer 給用戶看
+            // 但原本的 finalBlock 留在 DOM 中 part2 裡面，給 html2canvas 截圖用
             inputContainer.style.display = 'none';
-            finalBlock.style.display = 'block';
+            finalBlock.style.display = 'block'; // 顯示在 part2 底部
+            
+            // 複製一份給手機橫向捲動預覽 (視覺用)
+            cloneTarget.innerHTML = "";
+            cloneTarget.appendChild(finalBlock.cloneNode(true));
+            scrollContainer.style.display = 'block';
+            mobileHint.style.display = 'block';
             
             document.getElementById('editBtns').style.display = 'none';
             document.getElementById('previewBtns').style.display = 'flex';
@@ -439,6 +469,8 @@
         } else {
             inputContainer.style.display = 'block';
             finalBlock.style.display = 'none';
+            scrollContainer.style.display = 'none';
+            mobileHint.style.display = 'none';
             
             document.getElementById('editBtns').style.display = 'flex';
             document.getElementById('previewBtns').style.display = 'none';
@@ -446,19 +478,20 @@
         }
     }
 
-    // --- PDF 生成核心 (等比例縮放 + 完整截圖修復) ---
+    // --- PDF 生成核心 (智慧分頁 + 強制 A4 寬度) ---
     async function createPDFBlob() {
         if(!document.body.classList.contains('preview-mode')) togglePreview(true);
 
+        // 強制使用寬螢幕佈局渲染，解決手機跑版
         const opts = { 
             scale: 2, 
             useCORS: true, 
             scrollY: -window.scrollY,
-            windowWidth: 1200 // 強制寬螢幕渲染
+            windowWidth: 1200 
         };
 
         const part1 = document.getElementById('part1');
-        // ★ 關鍵修正：這裡改成截取 part2 (整個第二頁容器)，而不是只截取表格
+        // 截取整個 part2 (包含剛才顯示出來的 finalBlock)
         const part2 = document.getElementById('part2'); 
 
         const canvas1 = await html2canvas(part1, opts);
@@ -466,16 +499,41 @@
 
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = 210;
+        const pdfWidth = 210;   // A4 寬度
+        const pageHeight = 295; // A4 高度 (留點邊距)
         
-        // 第一頁 (等比例縮放，不強制高度)
+        // --- Page 1 ---
+        // 第一頁通常固定，直接貼上
         const imgHeight1 = (canvas1.height * pdfWidth) / canvas1.width;
         pdf.addImage(canvas1.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pdfWidth, imgHeight1);
         
-        // 第二頁 (等比例縮放，完整呈現)
-        pdf.addPage();
+        // --- Page 2 & 3+ (智慧分頁邏輯) ---
+        // 計算 Part 2 的總高度 (轉換為 PDF mm)
         const imgHeight2 = (canvas2.height * pdfWidth) / canvas2.width;
-        pdf.addImage(canvas2.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pdfWidth, imgHeight2);
+        
+        let heightLeft = imgHeight2;
+        let position = 0;
+        
+        // 新增第二頁
+        pdf.addPage();
+        
+        // 先貼上第二頁的內容 (從頭開始貼)
+        pdf.addImage(canvas2.toDataURL('image/jpeg', 0.9), 'JPEG', 0, position, pdfWidth, imgHeight2);
+        heightLeft -= pageHeight;
+
+        // 如果還有剩餘內容 (代表超過一頁)，自動新增第三頁、第四頁...
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight2; // 計算偏移量
+            pdf.addPage();
+            // 移動圖片位置，讓還沒顯示的部分露出來 (類似滑動視窗)
+            pdf.addImage(canvas2.toDataURL('image/jpeg', 0.9), 'JPEG', 0, position - heightLeft + pageHeight, pdfWidth, imgHeight2); // 修正偏移算法
+            heightLeft -= pageHeight;
+        }
+        
+        // 修正偏移算法說明：
+        // 上面的 while 迴圈是標準長圖切割法。如果效果不佳，
+        // 簡單暴力法：只要高度超過 297mm，就直接加一頁，把圖片往上移 -297mm。
+        // 上方代碼採用標準長圖分頁邏輯。
 
         return pdf;
     }
@@ -503,7 +561,6 @@
                 })
             });
 
-            // 成功提示 (引導截圖)
             alert(`✅ 簽署成功！已傳送至公司歸檔。\n\n【重要】：請您直接截圖目前的預覽畫面，作為您的留存備份。\n\n正式用印合約將於公司作業完成後提供。`);
             btn.innerText = "已完成 (請截圖留存)";
             
