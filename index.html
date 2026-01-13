@@ -18,13 +18,10 @@
             max-width: 800px; 
             margin: 0 auto; 
             background: white; 
-            padding: 20px; 
+            padding: 40px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
         }
-        @media (min-width: 600px) {
-            .container { padding: 40px; }
-        }
-
+        
         .page-content { background: white; margin-bottom: 20px; }
 
         /* --- 合約排版 --- */
@@ -35,7 +32,7 @@
         .contract-text { margin-bottom: 15px; line-height: 1.8; text-align: justify; font-size: 15px; }
         .contract-sub-title { font-weight: bold; margin-bottom: 5px; display: block; color: #000; }
         
-        /* 姓名同步區 (加大字體) */
+        /* 姓名同步區 */
         .sync-name { 
             border-bottom: 2px solid #000; 
             min-width: 150px; 
@@ -48,7 +45,7 @@
             vertical-align: bottom;
         }
 
-        /* --- 甲方資訊區 (固定) --- */
+        /* --- 甲方資訊區 --- */
         .party-a-section {
             margin-top: 40px;
             padding: 20px;
@@ -77,16 +74,15 @@
         .bank-group { display: flex; gap: 10px; flex-direction: column; }
         @media (min-width: 600px) { .bank-group { flex-direction: row; } }
 
+        /* 簽名板 */
         canvas { 
             border: 2px dashed #6c757d; background: #fff; cursor: crosshair; display: block; width: 100%; 
             touch-action: none; border-radius: 4px; 
         }
         .sig-buttons { margin-top: 8px; text-align: right; }
 
-        /* =========================================
-           預覽/PDF 模式核心 (Mobile Proof)
-           ========================================= */
-        
+        /* --- 預覽區塊樣式 (手機防跑版核心) --- */
+        /* 外層容器：允許捲動 */
         #preview-scroll-container {
             display: none;
             width: 100%;
@@ -98,17 +94,13 @@
             margin-top: 10px;
         }
 
-        /* 最終合約表格區塊 - A4 比例定寬 */
+        /* 最終合約表格 - 內嵌於第二頁 */
         #final-contract-block { 
             display: none; 
-            width: 700px; /* 強制寬度，確保排版不跑位 */
-            margin: 0 auto;
             margin-top: 30px;
             border-top: 3px solid #333; 
-            padding: 30px; /* 增加內距讓截圖更好看 */
+            padding-top: 20px;
             color: #000;
-            background: white;
-            box-sizing: border-box;
         }
 
         .preview-row {
@@ -310,53 +302,47 @@
         </div>
     </div>
 
-    <div id="preview-scroll-container">
-        <div id="final-contract-block">
-            <div style="font-weight: bold; margin-bottom: 15px; font-size: 18px;">乙方（勞工）：</div>
-            
-            <div class="preview-row">
-                <div class="preview-label">姓名：</div>
-                <div class="preview-value" id="pv_signerName"></div>
-            </div>
+    <div id="final-contract-block">
+        <div style="font-weight: bold; margin-bottom: 15px; font-size: 18px;">乙方（勞工）：</div>
+        
+        <div class="preview-row">
+            <div class="preview-label">姓名：</div>
+            <div class="preview-value" id="pv_signerName"></div>
+        </div>
 
-            <div class="preview-row">
-                <div class="preview-label">身分證字號：</div>
-                <div class="preview-value" id="pv_signerID"></div>
-            </div>
+        <div class="preview-row">
+            <div class="preview-label">身分證字號：</div>
+            <div class="preview-value" id="pv_signerID"></div>
+        </div>
 
-            <div class="preview-row">
-                <div class="preview-label">聯絡地址：</div>
-                <div class="preview-value" id="pv_signerAddress"></div>
-            </div>
+        <div class="preview-row">
+            <div class="preview-label">聯絡地址：</div>
+            <div class="preview-value" id="pv_signerAddress"></div>
+        </div>
 
-            <div class="preview-row">
-                <div class="preview-label">約定時薪：</div>
-                <div class="preview-value">
-                    <span id="pv_hourlyRate"></span> <span class="unit-text">元/小時</span>
-                </div>
-            </div>
-
-            <div class="preview-row">
-                <div class="preview-label">薪資帳戶：</div>
-                <div class="preview-value" id="pv_bankFull"></div>
-            </div>
-
-            <div class="preview-row">
-                <div class="preview-label">簽署日期：</div>
-                <div class="preview-value" id="pv_dateFull"></div>
-            </div>
-
-            <div class="preview-row" style="border-bottom: none; margin-top: 10px;">
-                <div class="preview-label">簽章：</div>
-                <div class="preview-value">
-                    <img id="preview-sig-img" src="" alt="簽名載入中" />
-                </div>
+        <div class="preview-row">
+            <div class="preview-label">約定時薪：</div>
+            <div class="preview-value">
+                <span id="pv_hourlyRate"></span> <span class="unit-text">元/小時</span>
             </div>
         </div>
-    </div>
-    
-    <div id="mobile-hint" style="display:none; text-align:center; color:#e74c3c; padding: 10px; font-weight:bold;">
-        💡 手機用戶請「左右滑動」表格以確認內容，並可「截圖」留存。
+
+        <div class="preview-row">
+            <div class="preview-label">薪資帳戶：</div>
+            <div class="preview-value" id="pv_bankFull"></div>
+        </div>
+
+        <div class="preview-row">
+            <div class="preview-label">簽署日期：</div>
+            <div class="preview-value" id="pv_dateFull"></div>
+        </div>
+
+        <div class="preview-row" style="border-bottom: none; margin-top: 10px;">
+            <div class="preview-label">簽章：</div>
+            <div class="preview-value">
+                <img id="preview-sig-img" src="" alt="簽名載入中" />
+            </div>
+        </div>
     </div>
 
 </div>
@@ -422,9 +408,7 @@
     // --- 預覽切換 ---
     function togglePreview(show) {
         const inputContainer = document.getElementById('input-form-container');
-        const scrollContainer = document.getElementById('preview-scroll-container');
         const finalBlock = document.getElementById('final-contract-block');
-        const mobileHint = document.getElementById('mobile-hint');
 
         if(show) {
             if(!document.getElementById('signerName').value) { alert("請至少填寫姓名"); return; }
@@ -445,9 +429,7 @@
 
             // 顯示
             inputContainer.style.display = 'none';
-            scrollContainer.style.display = 'block';
             finalBlock.style.display = 'block';
-            mobileHint.style.display = 'block';
             
             document.getElementById('editBtns').style.display = 'none';
             document.getElementById('previewBtns').style.display = 'flex';
@@ -456,9 +438,7 @@
 
         } else {
             inputContainer.style.display = 'block';
-            scrollContainer.style.display = 'none';
             finalBlock.style.display = 'none';
-            mobileHint.style.display = 'none';
             
             document.getElementById('editBtns').style.display = 'flex';
             document.getElementById('previewBtns').style.display = 'none';
@@ -466,7 +446,7 @@
         }
     }
 
-    // --- PDF 生成核心 (修復扁平字體問題) ---
+    // --- PDF 生成核心 (等比例縮放 + 完整截圖修復) ---
     async function createPDFBlob() {
         if(!document.body.classList.contains('preview-mode')) togglePreview(true);
 
@@ -474,11 +454,12 @@
             scale: 2, 
             useCORS: true, 
             scrollY: -window.scrollY,
-            windowWidth: 1200 
+            windowWidth: 1200 // 強制寬螢幕渲染
         };
 
         const part1 = document.getElementById('part1');
-        const part2 = document.getElementById('final-contract-block'); 
+        // ★ 關鍵修正：這裡改成截取 part2 (整個第二頁容器)，而不是只截取表格
+        const part2 = document.getElementById('part2'); 
 
         const canvas1 = await html2canvas(part1, opts);
         const canvas2 = await html2canvas(part2, opts);
@@ -486,13 +467,12 @@
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = 210;
-        // 移除 pdfHeight 限制，讓它自然延伸
         
-        // 第一頁
+        // 第一頁 (等比例縮放，不強制高度)
         const imgHeight1 = (canvas1.height * pdfWidth) / canvas1.width;
         pdf.addImage(canvas1.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pdfWidth, imgHeight1);
         
-        // 第二頁
+        // 第二頁 (等比例縮放，完整呈現)
         pdf.addPage();
         const imgHeight2 = (canvas2.height * pdfWidth) / canvas2.width;
         pdf.addImage(canvas2.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pdfWidth, imgHeight2);
@@ -523,7 +503,7 @@
                 })
             });
 
-            // ★ 修改成功提示，引導截圖 ★
+            // 成功提示 (引導截圖)
             alert(`✅ 簽署成功！已傳送至公司歸檔。\n\n【重要】：請您直接截圖目前的預覽畫面，作為您的留存備份。\n\n正式用印合約將於公司作業完成後提供。`);
             btn.innerText = "已完成 (請截圖留存)";
             
