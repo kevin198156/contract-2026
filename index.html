@@ -7,254 +7,232 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* --- 基礎重置 --- */
+        /* --- 全局設定 --- */
+        * { box-sizing: border-box; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #f4f4f4; padding: 10px; color: #333; letter-spacing: 0.5px; 
-            overscroll-behavior: none; 
+            font-family: -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", "Segoe UI", Roboto, sans-serif;
+            background: #f0f2f5; margin: 0; padding: 0; color: #333; 
+            overscroll-behavior: none;
         }
         
-        .container { 
-            max-width: 800px; margin: 0 auto; background: white; padding: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        /* 主容器 */
+        .main-container { 
+            max-width: 800px; margin: 20px auto; background: white; 
+            padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
         }
 
-        /* --- 編輯模式樣式 --- */
-        .edit-mode-only {
-            background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #007bff; 
-            margin-top: 30px;
+        /* 步驟指示器 */
+        .step-indicator {
+            background: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 20px;
+            font-weight: bold; color: #555; text-align: center;
         }
-        .form-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #007bff; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
-        
+        .step-active { color: #007bff; }
+
+        /* 輸入欄位樣式 */
         .input-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 16px; }
-        
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 15px; }
         input[type="text"], input[type="number"] { 
-            width: 100%; padding: 12px; border: 1px solid #999; border-radius: 4px; 
-            font-size: 16px; box-sizing: border-box; appearance: none;
+            width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; 
+            font-size: 16px; /* 防止 iOS 縮放 */
         }
-
         .bank-group { display: flex; gap: 10px; flex-direction: column; }
         @media (min-width: 600px) { .bank-group { flex-direction: row; } }
 
+        /* 簽名板 */
         canvas { 
-            border: 2px dashed #6c757d; background: #fff; cursor: crosshair; display: block; width: 100%; 
-            touch-action: none; border-radius: 4px; 
+            border: 2px dashed #6c757d; background: #fff; cursor: crosshair; 
+            display: block; width: 100%; touch-action: none; border-radius: 4px; 
         }
-        .sig-buttons { margin-top: 8px; text-align: right; }
+        .sig-buttons { margin-top: 5px; text-align: right; }
+        .clear-btn { background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
 
         /* =========================================
-           PDF 頁面結構樣式 (定義三頁內容)
+           預覽視窗 (Modal Overlay) - 電腦手機通用
            ========================================= */
-        
-        /* 隱藏來源 DOM */
-        .pdf-source-container { display: none; }
-
-        /* 定義 PDF 每一頁的物理尺寸 (確保 A4 不跑版) */
-        .pdf-page {
-            width: 780px; /* 固定寬度，模擬 A4 */
-            background: white;
-            padding: 50px; 
-            margin-bottom: 20px;
-            color: #000;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            position: relative;
-            font-size: 16px; 
+        #preview-modal {
+            display: none; /* 預設隱藏 */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); /* 深色遮罩 */
+            z-index: 9999;
+            overflow-y: auto; /* 允許垂直捲動 */
+            padding: 20px 0;
         }
 
-        /* 預覽模式容器 (手機橫向捲動修復) */
-        #preview-scroll-window {
-            display: none;
+        /* 預覽內容容器 */
+        #preview-content {
             width: 100%;
-            overflow-x: auto; /* 允許左右滑動 */
-            -webkit-overflow-scrolling: touch;
-            background: #525659; 
-            padding: 20px 10px;
-            box-sizing: border-box;
-            margin-top: 20px;
+            max-width: 820px; /* 比 A4 稍寬 */
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
         }
+
+        /* PDF 頁面實體樣式 (模擬 A4 紙張) */
+        .pdf-page-render {
+            width: 750px; /* 固定寬度，確保排版一致 */
+            min-height: 1060px; /* A4 比例 */
+            background: white;
+            padding: 50px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            font-size: 14px; /* 字體稍小，確保內容塞得下 */
+            line-height: 1.6;
+            color: #000;
+            text-align: justify;
+            position: relative;
+        }
+
+        /* 手機版預覽優化：允許橫向捲動 */
+        @media (max-width: 800px) {
+            #preview-content {
+                align-items: flex-start; /* 靠左對齊，讓捲軸生效 */
+                padding: 0 10px;
+                overflow-x: auto; /* 啟用橫向捲動 */
+            }
+        }
+
+        /* 合約內部樣式 */
+        .contract-title { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .section-title { font-size: 16px; font-weight: bold; background: #eee; padding: 5px; margin-top: 15px; margin-bottom: 10px; }
+        .item-row { margin-bottom: 8px; }
+        .item-label { font-weight: bold; }
         
-        /* 預覽內容的容器，強制寬度 */
-        #preview-content-target {
-            min-width: 800px; /* 強制撐開寬度，確保不被手機螢幕擠壓 */
-        }
+        /* 乙方資料表格 (預覽用) */
+        .info-table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+        .info-row { border-bottom: 1px solid #ccc; display: flex; padding: 8px 0; }
+        .info-label { width: 120px; font-weight: bold; text-align: right; padding-right: 15px; flex-shrink: 0; }
+        .info-value { flex-grow: 1; font-weight: 500; word-break: break-all; }
+        .signature-img { max-height: 80px; max-width: 250px; }
 
-        h1 { text-align: center; font-size: 24px; margin-bottom: 25px; border-bottom: 2px solid #333; padding-bottom: 15px; }
-        h2 { font-size: 20px; background-color: #eee; padding: 10px; margin-top: 30px; border-left: 6px solid #2c3e50; font-weight: bold; }
-        p { line-height: 1.8; margin-bottom: 15px; text-align: justify; }
+        /* 底部按鈕區 */
+        .modal-footer {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: #333; padding: 15px; text-align: center;
+            display: flex; justify-content: center; gap: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        .btn-large { padding: 12px 30px; font-size: 16px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-edit { background: #6c757d; color: white; }
+        .btn-submit { background: #28a745; color: white; }
         
-        .contract-text { margin-bottom: 15px; line-height: 1.8; text-align: justify; }
-        .contract-sub-title { font-weight: bold; margin-bottom: 5px; display: block; color: #000; }
-        
-        .sync-name { 
-            border-bottom: 2px solid #000; min-width: 150px; display: inline-block; 
-            text-align: center; font-weight: bold; font-size: 20px; padding: 0 10px;
-        }
-
-        /* 甲方資訊 */
-        .party-a-section {
-            margin-top: 40px; padding: 20px; border: 2px solid #333;
-            background-color: #fff; line-height: 1.8;
-        }
-
-        /* 乙方預覽表格 */
-        .preview-row { display: flex; border-bottom: 1px solid #ccc; padding: 12px 0; align-items: flex-end; }
-        .preview-label { width: 140px; font-weight: bold; text-align: right; padding-right: 20px; flex-shrink: 0; white-space: nowrap; }
-        .preview-value { flex-grow: 1; font-size: 18px; font-weight: 500; min-height: 24px; word-break: break-all; }
-        #preview-sig-img { max-width: 300px; height: 100px; display: block; }
-
-        /* 底部按鈕 */
-        .action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #333; padding: 15px; text-align: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); display: flex; justify-content: center; gap: 10px; z-index: 999; }
-        .btn { padding: 12px 15px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; min-width: 100px; }
-        .btn-primary { background: #007bff; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-secondary { background: #6c757d; color: white; }
-        .spacer { height: 100px; }
+        /* 隱藏的模板來源 */
+        #template-source { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container" id="input-form-container">
-    <h1>睿思有限公司 115 年度定期勞動契約簽署</h1>
-    <p>請填寫以下欄位，完成後點擊下方「預覽合約」進行確認。</p>
-    
-    <div class="edit-mode-only">
-        <div class="form-title">📝 乙方（勞工）填寫區</div>
-        <div class="input-group"><label>1. 雙方議定時薪 (新臺幣/小時)：</label><input type="number" id="hourlyRate" placeholder="例如：500"></div>
-        <div class="input-group"><label>2. 姓名：</label><input type="text" id="signerName" placeholder="請輸入真實姓名" oninput="syncName(this.value)"></div>
-        <div class="input-group"><label>3. 身分證字號：</label><input type="text" id="signerID" placeholder="請輸入身分證字號"></div>
-        <div class="input-group"><label>4. 戶籍/通訊地址：</label><input type="text" id="signerAddress" placeholder="請輸入完整地址"></div>
-        <div class="input-group">
-            <label>5. 薪資匯款帳戶：</label>
-            <div class="bank-group">
-                <input type="text" id="bankName" placeholder="銀行名稱">
-                <input type="text" id="bankBranch" placeholder="分行名稱">
-                <input type="text" id="bankAccount" placeholder="帳號">
-            </div>
-        </div>
-        <div class="input-group">
-            <label>6. 簽署日期：</label>
-            <div style="font-size: 16px; padding: 10px; background: #e9ecef;" id="dateDisplayEdit">
-                中華民國 115 年 <span id="signMonth"></span> 月 <span id="signDay"></span> 日
-            </div>
-        </div>
-        <div class="input-group">
-            <label>7. 乙方電子簽名：</label>
-            <canvas id="signaturePad" height="200"></canvas>
-            <div class="sig-buttons"><button class="clear-btn" onclick="clearSignature()">清除重簽</button></div>
+<div class="main-container" id="step1-container">
+    <div class="step-indicator">
+        <span class="step-active">步驟 1：填寫資料</span> &gt; 步驟 2：預覽與簽署
+    </div>
+
+    <h1>睿思有限公司 115 年度定期勞動契約</h1>
+    <p style="color: #666; font-size: 14px;">請填寫下方欄位，並於最下方簽名。點擊「下一步」後可預覽完整合約。</p>
+    <hr>
+
+    <div class="input-group"><label>1. 雙方議定時薪 (新臺幣/小時)：</label><input type="number" id="hourlyRate" placeholder="例如：500"></div>
+    <div class="input-group"><label>2. 姓名：</label><input type="text" id="signerName" placeholder="請輸入真實姓名"></div>
+    <div class="input-group"><label>3. 身分證字號：</label><input type="text" id="signerID" placeholder="請輸入身分證字號"></div>
+    <div class="input-group"><label>4. 戶籍/通訊地址：</label><input type="text" id="signerAddress" placeholder="請輸入完整地址"></div>
+    <div class="input-group">
+        <label>5. 薪資匯款帳戶：</label>
+        <div class="bank-group">
+            <input type="text" id="bankName" placeholder="銀行名稱">
+            <input type="text" id="bankBranch" placeholder="分行名稱">
+            <input type="text" id="bankAccount" placeholder="帳號">
         </div>
     </div>
-    <div class="spacer"></div>
+    <div class="input-group"><label>6. 簽署日期：</label><input type="text" value="中華民國 115 年 1 月 13 日" readonly style="background:#eee;"></div>
+    
+    <div class="input-group">
+        <label>7. 請在此簽名：</label>
+        <canvas id="signaturePad" height="200"></canvas>
+        <div class="sig-buttons"><button class="clear-btn" onclick="clearSignature()">清除重簽</button></div>
+    </div>
+
+    <button class="btn-large btn-submit" style="width:100%; margin-top:20px;" onclick="goToPreview()">下一步：預覽合約</button>
 </div>
 
-<div class="pdf-source-container">
-    
-    <div id="pdf-page-1" class="pdf-page">
-        <h1>睿思有限公司 115 年度定期勞動契約書 (按摩師)</h1>
-        <p>
-            <strong>甲方（雇主）：</strong> 睿思有限公司<br>
-            <strong>乙方（勞工）：</strong> <span id="displayTopName" class="sync-name"></span>
-        </p>
+<div id="preview-modal">
+    <div id="preview-content">
+        </div>
+    <div style="height: 100px;"></div> <div class="modal-footer">
+        <button class="btn-large btn-edit" onclick="closePreview()">返回修改</button>
+        <button class="btn-large btn-submit" id="submitBtn" onclick="submitContract()">確認簽署並送出</button>
+    </div>
+</div>
+
+<div id="template-source">
+    <div id="tpl-page1">
+        <div class="contract-title">睿思有限公司 115 年度定期勞動契約書 (按摩師)</div>
+        <div class="item-row"><strong>甲方（雇主）：</strong> 睿思有限公司</div>
+        <div class="item-row"><strong>乙方（勞工）：</strong> <span class="fill-name"></span></div>
         <p>本契約因執行國家運動訓練中心「115 年度培訓隊選手及教練按摩服務（開口契約）案」（以下簡稱本專案）而成立，雙方同意條款如下：</p>
+        
+        <div class="section-title">一、 聘僱期間與工作內容</div>
+        <div class="item-row"><strong>聘僱期間：</strong>自 115 年 1 月 1 日起至 115 年 12 月 31 日止。若本專案因機關需求調整、預估時數提前執行完畢或主標案契約提前終止，本契約隨之終止，乙方不得要求甲方支付資遣費或損害賠償。</div>
+        <div class="item-row"><strong>工作地點：</strong>高雄市左營區世運大道 399 號（國家運動訓練中心）。</div>
+        <div class="item-row"><strong>工作內容：</strong>為中心選手及教練執行運動按摩、油壓、腳底按摩等專業恢復服務。</div>
+        <div class="item-row"><strong>專業規範：</strong>乙方承諾全程採純徒手按摩，嚴禁使用筋膜刀、治療儀器、拔罐及刮痧等非徒手工具。</div>
+        <div class="item-row"><strong>耗材設備：</strong>相關消耗性材料（如精油、乳液）由甲方統一提供，乙方不得私自使用未經甲方核可之產品。</div>
 
-        <h2>一、 聘僱期間與工作內容</h2>
-        <div class="contract-text"><span class="contract-sub-title">聘僱期間：</span>自 115 年 1 月 1 日起至 115 年 12 月 31 日止。若本專案因機關需求調整、預估時數提前執行完畢或主標案契約提前終止，本契約隨之終止，乙方不得要求甲方支付資遣費或損害賠償。</div>
-        <div class="contract-text"><span class="contract-sub-title">工作地點：</span>高雄市左營區世運大道 399 號（國家運動訓練中心）。</div>
-        <div class="contract-text"><span class="contract-sub-title">工作內容：</span>為中心選手及教練執行運動按摩、油壓、腳底按摩等專業恢復服務。</div>
-        <div class="contract-text">
-            <span class="contract-sub-title">專業規範與品質控管：</span>
-            乙方承諾全程採純徒手按摩，嚴禁使用筋膜刀、治療儀器、拔罐及刮痧等非徒手工具。<br>
-            <strong>耗材與設備：</strong>相關消耗性材料（如精油、乳液）由甲方統一提供，乙方不得私自使用未經甲方核可之產品，以確保服務品質與選手皮膚安全。
-        </div>
-
-        <h2>二、 工作時間與排班</h2>
-        <div class="contract-text"><span class="contract-sub-title">服務時段：</span>原則為週一至週五 17:50 至 20:50。時段多寡將視中心需求（如總集訓、亞運期間）進行調整。</div>
-        <div class="contract-text"><span class="contract-sub-title">排班機制：</span>採全預約制。甲方將於每月 15 日前排定次月名單。</div>
-        <div class="contract-text"><span class="contract-sub-title">一般請假：</span>乙方若因個人事務需調整已排定之班表，應於服務日 7 日前告知甲方。</div>
-        <div class="contract-text"><span class="contract-sub-title">代班責任歸屬：</span>針對乙方提出之換班請求，甲方得協助於專案人才庫中諮詢其他老師之代班意願，惟甲方不負保證尋得替補人員之義務。</div>
-        <div class="contract-text"><span class="contract-sub-title">違約認定：</span>若經甲方協助諮詢後仍未能尋得代班人，乙方仍應依原排定班表出勤。若乙方最終未能出勤，視同乙方違約，甲方得依本契約第四條之規範扣除違約金或終止契約。</div>
-        <div class="contract-text"><span class="contract-sub-title">緊急事故：</span>僅限突發傷病或一親等內重大變故（需提供診斷證明或相關佐證），則不在此限。</div>
+        <div class="section-title">二、 工作時間與排班</div>
+        <div class="item-row"><strong>服務時段：</strong>原則為週一至週五 17:50 至 20:50。時段多寡將視中心需求調整。</div>
+        <div class="item-row"><strong>排班機制：</strong>採全預約制。甲方將於每月 15 日前排定次月名單。</div>
+        <div class="item-row"><strong>一般請假：</strong>乙方若因個人事務需調整已排定之班表，應於服務日 7 日前告知甲方。</div>
+        <div class="item-row"><strong>違約認定：</strong>若經甲方協助諮詢後仍未能尋得代班人，乙方仍應依原排定班表出勤。</div>
+        <div class="item-row"><strong>緊急事故：</strong>僅限突發傷病或一親等內重大變故，則不在此限。</div>
     </div>
 
-    <div id="pdf-page-2" class="pdf-page">
-        <h2>三、 薪資給付與授權條款</h2>
-        <div class="contract-text"><span class="contract-sub-title">薪資標準：</span>乙方薪資以實際服務小時計算，時薪以雙方電話議定後於下方「約定服務時薪」欄位填寫之金額為準。</div>
-        <div class="contract-text"><span class="contract-sub-title">給付日期：</span>甲方應於每月底提送發票，俟中心撥付價金後（預計每月初），於 5 個工作日內匯入乙方指定帳戶。</div>
-        <div class="contract-text"><span class="contract-sub-title">中心代付授權：</span>乙方同意，若甲方未依限給付薪資且經中心催告仍未改正者，甲方同意由中心將應給付甲方之價金直接撥付予乙方。</div>
+    <div id="tpl-page2">
+        <div class="section-title">三、 薪資給付與授權條款</div>
+        <div class="item-row"><strong>薪資標準：</strong>乙方薪資以實際服務小時計算，時薪以雙方電話議定後於下方「約定服務時薪」欄位填寫之金額為準。</div>
+        <div class="item-row"><strong>給付日期：</strong>甲方應於每月底提送發票，俟中心撥付價金後（預計每月初），於 5 個工作日內匯入乙方指定帳戶。</div>
+        <div class="item-row"><strong>中心代付：</strong>乙方同意，若甲方未依限給付薪資且經中心催告仍未改正者，甲方同意由中心將應給付甲方之價金直接撥付予乙方。</div>
 
-        <h2>四、 服務品質與行政配合</h2>
-        <div class="contract-text"><span class="contract-sub-title">個資與報備授權：</span>乙方同意將身分證影本、證照影本、性平受訓證明及相關個資提供予甲方，並授權甲方提交予國家運動訓練中心辦理入內報備、資格審查及保密切結。</div>
-        <div class="contract-text"><span class="contract-sub-title">教育訓練：</span>乙方應於到職前完成 2 小時性別平等教育訓練，並提交證明文件。</div>
-        <div class="contract-text"><span class="contract-sub-title">工作守則：</span>乙方應簽署並遵守「中心按摩服務人員工作守則」，包含嚴禁與選手閒聊、合照或交換社群軟體聯繫方式（如 Line、IG）。</div>
-        <div class="contract-text">
-            <span class="contract-sub-title">品質考核與違規：</span>
-            若選手滿意度評分低於 4 分，乙方應配合提交檢討報告；若低於 3 分，甲方得立即停止排班並終止契約。<br>
-            乙方若遲到（每 10 分鐘計罰 300 元）或違反規範導致中心對甲方計罰，該罰款由乙方薪資中扣除。
-        </div>
+        <div class="section-title">四、 服務品質與行政配合</div>
+        <div class="item-row"><strong>個資授權：</strong>乙方同意將身分證影本、證照影本、性平受訓證明及相關個資提供予甲方，供中心辦理入內報備。</div>
+        <div class="item-row"><strong>教育訓練：</strong>乙方應於到職前完成 2 小時性別平等教育訓練。</div>
+        <div class="item-row"><strong>工作守則：</strong>乙方應簽署並遵守「中心按摩服務人員工作守則」，嚴禁與選手閒聊、合照或交換社群聯繫方式。</div>
+        <div class="item-row"><strong>品質違規：</strong>滿意度低於 3 分得終止契約；遲到每 10 分鐘罰 300 元。</div>
 
-        <h2>五、 勞工權益與保險配套</h2>
-        <div class="contract-text"><span class="contract-sub-title">性平保障：</span>甲方落實《性別平等工作法》相關措施，保障乙方申訴權利。</div>
-        <div class="contract-text"><span class="contract-sub-title">勞職保投保配套：</span>甲方依規為乙方投保勞保、職保及健保。乙方應於簽約時提供正確之投保與薪資匯款資料，若因資料提供延遲或錯誤導致投保、撥薪作業延誤，責任由乙方自負。</div>
+        <div class="section-title">五、 勞工權益與保險配套</div>
+        <div class="item-row"><strong>性平保障：</strong>甲方落實《性別平等工作法》相關措施。</div>
+        <div class="item-row"><strong>投保配套：</strong>甲方依規為乙方投保勞保、職保及健保。</div>
 
-        <h2>六、 保密義務</h2>
-        <p>乙方對於因執行職務所知悉之中心公務秘密、選手個人資料及隱私，負有絕對保密之義務，不因契約終止而解除。</p>
+        <div class="section-title">六、 保密義務</div>
+        <div class="item-row">乙方對於因執行職務所知悉之中心公務秘密及選手隱私，負有絕對保密義務。</div>
     </div>
 
-    <div id="pdf-page-3" class="pdf-page">
-        <h2>七、 法律管轄</h2>
-        <p>本契約如有爭議，雙方同意以臺灣高雄地方法院為第一審管轄法院。</p>
+    <div id="tpl-page3">
+        <div class="section-title">七、 法律管轄</div>
+        <div class="item-row">本契約如有爭議，雙方同意以臺灣高雄地方法院為第一審管轄法院。</div>
 
-        <div class="party-a-section">
+        <div style="margin-top: 30px; border: 2px solid #333; padding: 15px;">
             <strong>甲方：</strong> 睿思有限公司 <br>
             <strong>代表人：</strong> 蔡惠婷 <br>
             <strong>統一編號：</strong> 90048526 
         </div>
 
-        <div style="font-weight: bold; margin-bottom: 15px; font-size: 18px; margin-top: 30px;">乙方（勞工）：</div>
-        
-        <div class="preview-row"><div class="preview-label">姓名：</div><div class="preview-value" id="pv_signerName"></div></div>
-        <div class="preview-row"><div class="preview-label">身分證字號：</div><div class="preview-value" id="pv_signerID"></div></div>
-        <div class="preview-row"><div class="preview-label">聯絡地址：</div><div class="preview-value" id="pv_signerAddress"></div></div>
-        <div class="preview-row"><div class="preview-label">約定時薪：</div><div class="preview-value"><span id="pv_hourlyRate"></span> <span class="unit-text">元/小時</span></div></div>
-        <div class="preview-row"><div class="preview-label">薪資帳戶：</div><div class="preview-value" id="pv_bankFull"></div></div>
-        <div class="preview-row"><div class="preview-label">簽署日期：</div><div class="preview-value" id="pv_dateFull"></div></div>
-        <div class="preview-row" style="border-bottom: none; margin-top: 20px;">
-            <div class="preview-label">簽章：</div>
-            <div class="preview-value"><img id="preview-sig-img" src="" alt="簽名載入中" /></div>
+        <div style="margin-top: 30px;"><strong>乙方（勞工）：</strong></div>
+        <div class="info-table">
+            <div class="info-row"><div class="info-label">姓名：</div><div class="info-value fill-name"></div></div>
+            <div class="info-row"><div class="info-label">身分證字號：</div><div class="info-value fill-id"></div></div>
+            <div class="info-row"><div class="info-label">聯絡地址：</div><div class="info-value fill-addr"></div></div>
+            <div class="info-row"><div class="info-label">約定時薪：</div><div class="info-value"><span class="fill-rate"></span> 元/小時</div></div>
+            <div class="info-row"><div class="info-label">薪資帳戶：</div><div class="info-value fill-bank"></div></div>
+            <div class="info-row"><div class="info-label">簽署日期：</div><div class="info-value">中華民國 115 年 1 月 13 日</div></div>
+            <div class="info-row" style="border:none; margin-top:10px;">
+                <div class="info-label">簽章：</div>
+                <div class="info-value"><img class="fill-sig signature-img" /></div>
+            </div>
         </div>
     </div>
 </div>
 
-<div id="preview-scroll-window">
-    <div id="preview-content-target"></div>
-</div>
-<div id="mobile-hint" style="display:none; text-align:center; color:#e74c3c; padding: 10px; font-weight:bold;">
-    💡 手機用戶請「左右滑動」灰色區域以檢查完整合約，確認無誤後再送出。
-</div>
-
-<div class="action-bar" id="editBtns">
-    <button class="btn btn-primary" onclick="togglePreview(true)">預覽合約</button>
-</div>
-<div class="action-bar" id="previewBtns" style="display:none;">
-    <button class="btn btn-secondary" onclick="togglePreview(false)">返回修改</button>
-    <button class="btn btn-success" id="submitBtn" onclick="generateAndSend()">確認送出</button>
-</div>
-
 <script>
-    window.onload = function() {
-        const today = new Date();
-        document.getElementById('signMonth').innerText = today.getMonth() + 1;
-        document.getElementById('signDay').innerText = today.getDate();
-        resizeCanvas();
-    };
-
-    function syncName(val) {
-        const display = document.getElementById('displayTopName');
-        display.innerText = val ? val : "";
-        display.style.textDecoration = val ? "underline" : "none";
-    }
-
+    // --- 畫布設定 ---
     var canvas = document.getElementById('signaturePad');
     var ctx = canvas.getContext('2d');
     var isDrawing = false;
@@ -265,7 +243,9 @@
         canvas.height = canvas.offsetHeight * ratio;
         ctx.scale(ratio, ratio);
     }
-    
+    window.onresize = resizeCanvas;
+    resizeCanvas();
+
     function getPos(e) {
         var rect = canvas.getBoundingClientRect();
         var clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -273,93 +253,93 @@
         return { x: clientX - rect.left, y: clientY - rect.top };
     }
 
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('touchstart', startDraw, {passive: false});
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('touchmove', draw, {passive: false});
-    canvas.addEventListener('mouseup', stopDraw);
-    canvas.addEventListener('touchend', stopDraw);
-
-    function startDraw(e) { isDrawing = true; ctx.beginPath(); var pos = getPos(e); ctx.moveTo(pos.x, pos.y); e.preventDefault(); }
-    function draw(e) { if(!isDrawing) return; var pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); e.preventDefault(); }
-    function stopDraw() { isDrawing = false; }
+    canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); });
+    canvas.addEventListener('touchstart', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('mousemove', (e) => { if(isDrawing) { ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); } });
+    canvas.addEventListener('touchmove', (e) => { if(isDrawing) { ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); e.preventDefault(); } }, {passive: false});
+    canvas.addEventListener('mouseup', () => isDrawing = false);
+    canvas.addEventListener('touchend', () => isDrawing = false);
     function clearSignature() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-    function togglePreview(show) {
-        const inputContainer = document.getElementById('input-form-container');
-        const previewWindow = document.getElementById('preview-scroll-window');
-        const mobileHint = document.getElementById('mobile-hint');
-        const previewTarget = document.getElementById('preview-content-target');
+    // --- 預覽流程 (核心邏輯：複製 HTML) ---
+    function goToPreview() {
+        // 1. 驗證
+        if(!document.getElementById('signerName').value) { alert("請填寫姓名"); return; }
+        
+        // 2. 準備資料
+        const name = document.getElementById('signerName').value;
+        const id = document.getElementById('signerID').value;
+        const addr = document.getElementById('signerAddress').value;
+        const rate = document.getElementById('hourlyRate').value;
+        const bank = (document.getElementById('bankName').value || "") + " " + (document.getElementById('bankBranch').value || "") + " " + (document.getElementById('bankAccount').value || "");
+        const sigData = canvas.toDataURL('image/png');
 
-        if(show) {
-            if(!document.getElementById('signerName').value) { alert("請至少填寫姓名"); return; }
+        // 3. 渲染預覽視窗 (清空舊的)
+        const previewContent = document.getElementById('preview-content');
+        previewContent.innerHTML = '';
+
+        // 建立三個頁面
+        const pages = ['tpl-page1', 'tpl-page2', 'tpl-page3'];
+        
+        pages.forEach(tplId => {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'pdf-page-render'; // 套用 A4 樣式
+            pageDiv.innerHTML = document.getElementById(tplId).innerHTML; // 複製模板 HTML
             
-            document.getElementById('pv_signerName').innerText = document.getElementById('signerName').value;
-            document.getElementById('pv_signerID').innerText = document.getElementById('signerID').value;
-            document.getElementById('pv_signerAddress').innerText = document.getElementById('signerAddress').value;
-            document.getElementById('pv_hourlyRate').innerText = document.getElementById('hourlyRate').value;
-            var bank = (document.getElementById('bankName').value || "") + " " + (document.getElementById('bankBranch').value || "") + " " + (document.getElementById('bankAccount').value || "");
-            document.getElementById('pv_bankFull').innerText = bank;
-            document.getElementById('pv_dateFull').innerText = document.getElementById('dateDisplayEdit').innerText.trim();
-            document.getElementById('preview-sig-img').src = canvas.toDataURL('image/png');
+            // 填入資料 (使用 class 選擇器)
+            pageDiv.querySelectorAll('.fill-name').forEach(el => el.innerText = name);
+            pageDiv.querySelectorAll('.fill-id').forEach(el => el.innerText = id);
+            pageDiv.querySelectorAll('.fill-addr').forEach(el => el.innerText = addr);
+            pageDiv.querySelectorAll('.fill-rate').forEach(el => el.innerText = rate);
+            pageDiv.querySelectorAll('.fill-bank').forEach(el => el.innerText = bank);
+            pageDiv.querySelectorAll('.fill-sig').forEach(el => el.src = sigData);
 
-            previewTarget.innerHTML = "";
-            previewTarget.appendChild(document.getElementById('pdf-page-1').cloneNode(true));
-            previewTarget.appendChild(document.getElementById('pdf-page-2').cloneNode(true));
-            previewTarget.appendChild(document.getElementById('pdf-page-3').cloneNode(true));
+            previewContent.appendChild(pageDiv);
+        });
 
-            inputContainer.style.display = 'none';
-            previewWindow.style.display = 'block';
-            mobileHint.style.display = 'block';
-            document.getElementById('editBtns').style.display = 'none';
-            document.getElementById('previewBtns').style.display = 'flex';
-            window.scrollTo(0, 0);
-        } else {
-            inputContainer.style.display = 'block';
-            previewWindow.style.display = 'none';
-            mobileHint.style.display = 'none';
-            document.getElementById('editBtns').style.display = 'flex';
-            document.getElementById('previewBtns').style.display = 'none';
-        }
+        // 4. 顯示視窗
+        document.getElementById('preview-modal').style.display = 'block';
     }
 
-    async function createPDFBlob() {
-        const opts = { scale: 2, useCORS: true, windowWidth: 1200 };
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = 210;
-
-        // 絕對硬式分頁：Page 1
-        const canvas1 = await html2canvas(document.getElementById('pdf-page-1'), opts);
-        // 使用 0.6 的品質壓縮 (解決手機上傳失敗關鍵)
-        const imgHeight1 = (canvas1.height * pdfWidth) / canvas1.width;
-        pdf.addImage(canvas1.toDataURL('image/jpeg', 0.6), 'JPEG', 0, 0, pdfWidth, imgHeight1);
-
-        // Page 2
-        pdf.addPage();
-        const canvas2 = await html2canvas(document.getElementById('pdf-page-2'), opts);
-        const imgHeight2 = (canvas2.height * pdfWidth) / canvas2.width;
-        pdf.addImage(canvas2.toDataURL('image/jpeg', 0.6), 'JPEG', 0, 0, pdfWidth, imgHeight2);
-
-        // Page 3
-        pdf.addPage();
-        const canvas3 = await html2canvas(document.getElementById('pdf-page-3'), opts);
-        const imgHeight3 = (canvas3.height * pdfWidth) / canvas3.width;
-        pdf.addImage(canvas3.toDataURL('image/jpeg', 0.6), 'JPEG', 0, 0, pdfWidth, imgHeight3);
-
-        return pdf;
+    function closePreview() {
+        document.getElementById('preview-modal').style.display = 'none';
     }
 
-    async function generateAndSend() {
+    // --- 送出邏輯 (輕量化處理) ---
+    async function submitContract() {
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
-        btn.innerText = "傳送中...";
+        btn.innerText = "加密壓縮中...";
 
         try {
-            const pdf = await createPDFBlob();
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = 210;
+            
+            // 取得預覽容器中的三個頁面
+            const pages = document.querySelectorAll('.pdf-page-render');
+            
+            // 設定截圖參數 (降低解析度以減少檔案大小)
+            // scale: 1.5 對於 A4 列印已經足夠清晰，且能大幅縮小體積
+            const opts = { scale: 1.5, useCORS: true, logging: false };
+
+            for (let i = 0; i < pages.length; i++) {
+                btn.innerText = `處理第 ${i+1} 頁...`;
+                const canvas = await html2canvas(pages[i], opts);
+                
+                // 壓縮品質 0.5 (關鍵修正)
+                const imgData = canvas.toDataURL('image/jpeg', 0.5);
+                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                if (i > 0) pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, imgHeight);
+            }
+
+            btn.innerText = "上傳雲端中...";
             const pdfBase64 = pdf.output('datauristring');
             const name = document.getElementById('signerName').value;
-            // 使用您之前提供的 GAS 網址
+            
+            // 您的 GAS URL
             const scriptURL = "https://script.google.com/macros/s/AKfycbzHaJLHFBdvM3NPYqP4yrJPx84wX6tPK54JNtUIqaJ6GDH7G4X5ZknwmVvrDgU49-DH/exec"; 
 
             await fetch(scriptURL, {
@@ -369,15 +349,17 @@
                 body: JSON.stringify({ fileName: `${name}_115年度定期勞動契約.pdf`, fileData: pdfBase64 })
             });
 
-            alert(`✅ 簽署成功！已傳送至公司歸檔。\n\n【請截圖留存】：您現在看到的三頁合約畫面即為最終版本，請直接截圖保存。\n\n正式用印合約將於公司作業完成後提供。`);
-            btn.innerText = "已完成 (請截圖留存)";
+            alert("✅ 成功！\n\n合約已送出歸檔。\n請直接「截圖」目前的合約畫面作為您的留存備份。");
+            btn.innerText = "已完成";
+            
         } catch (err) {
             console.error(err);
-            alert("⚠️ 傳送失敗。請檢查網路連線。");
+            alert("上傳發生錯誤，請檢查網路連線。\n建議直接截圖畫面傳給管理員。");
             btn.disabled = false;
             btn.innerText = "重試";
         }
     }
 </script>
+
 </body>
 </html>
